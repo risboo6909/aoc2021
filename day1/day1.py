@@ -21,8 +21,7 @@ def gold(lines):
     window = []
 
     for line in lines:
-        depth = int(line)
-        window.append(depth)
+        window.append(int(line))
 
         if len(window) == 3:
 
@@ -40,5 +39,4 @@ def solve():
     lines = open(os.path.join(os.path.dirname(
         __file__), 'input'), 'rt').readlines()
 
-    print(silver(lines))
-    print(gold(lines))
+    return "DAY 1", silver(lines), gold(lines)
