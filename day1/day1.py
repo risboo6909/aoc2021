@@ -27,7 +27,7 @@ def gold(lines):
         if len(window) == 3:
 
             sum_depth = sum(window)
-            if prev_sum_depth != None and sum_depth > prev_sum_depth:
+            if prev_sum_depth is not None and sum_depth > prev_sum_depth:
                 result += 1
 
             prev_sum_depth = sum_depth
