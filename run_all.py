@@ -8,5 +8,6 @@ def show_solution(solution_tuple):
 
 
 if __name__ == '__main__':
-    show_solution(d1.solve())
-    show_solution(d2.solve())
+    problems = [d1, d2]
+    for problem in problems:
+        show_solution(problem.solve())
