@@ -3,12 +3,11 @@ from typing import List, Tuple, Callable
 
 
 def bin_to_dec(bits: List[int]) -> int:
-    res, base = 0, 1
-    for bit in reversed(bits):
-        res += base * bit
-        base <<= 1
+    res = 0
+    for bit in bits:
+        res = 2 * (res + bit)
 
-    return res
+    return res >> 1
 
 
 def compute_freq(items: List[str]) -> Tuple[List[int], List[int]]:
