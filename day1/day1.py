@@ -36,7 +36,6 @@ def gold(lines):
 
 
 def solve():
-    lines = open(os.path.join(os.path.dirname(
-        __file__), 'input'), 'rt').readlines()
+    lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
 
     return "DAY 1", silver(lines), gold(lines)

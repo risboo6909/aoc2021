@@ -5,10 +5,10 @@ import day3.day3 as d3
 
 def show_solution(solution_tuple):
     name, silver, gold = solution_tuple
-    print(f'{name}: silver: {silver}, gold: {gold}')
+    print(f"{name}: silver: {silver}, gold: {gold}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     problems = [d1, d2, d3]
     for problem in problems:
         show_solution(problem.solve())
