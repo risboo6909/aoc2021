@@ -1,19 +1,18 @@
 import os
-from collections import defaultdict
 
 DAYS_TO_BORN = 6
 DAYS_TO_BORN_NEW = 8
 
 
 def solve_both(species, num_days):
-    gen = defaultdict(int)
+    gen = [0] * (DAYS_TO_BORN_NEW+1)
 
     for age in species:
         gen[age] += 1
 
     while num_days > 0:
-        next_gen = defaultdict(int)
-        for age, cnt in gen.items():
+        next_gen = [0] * (DAYS_TO_BORN_NEW+1)
+        for age, cnt in enumerate(gen):
             if age > 0:
                 next_gen[age - 1] += cnt
             else:
@@ -23,7 +22,7 @@ def solve_both(species, num_days):
         gen = next_gen
         num_days -= 1
 
-    return sum(gen.values())
+    return sum(gen)
 
 
 def parse(lines):
@@ -34,7 +33,8 @@ def parse(lines):
 
 
 def solve():
-    lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
+    lines = open(os.path.join(os.path.dirname(
+        __file__), "input"), "rt").readlines()
 
     numbers = parse(lines)
 
