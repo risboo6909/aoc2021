@@ -4,6 +4,7 @@ import day3.day3 as d3
 import day4.day4 as d4
 import day5.day5 as d5
 import day6.day6 as d6
+import day7.day7 as d7
 
 
 def show_solution(solution_tuple):
@@ -12,6 +13,6 @@ def show_solution(solution_tuple):
 
 
 if __name__ == "__main__":
-    problems = [d1, d2, d3, d4, d5, d6]
+    problems = [d1, d2, d3, d4, d5, d6, d7]
     for problem in problems:
         show_solution(problem.solve())
