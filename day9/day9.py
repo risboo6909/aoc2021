@@ -3,7 +3,6 @@ import numpy as np
 from functools import reduce
 from typing import List
 
-MAX_VAL = 10
 BASIN_BORDER = 9
 
 
