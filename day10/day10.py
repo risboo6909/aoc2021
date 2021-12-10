@@ -73,7 +73,6 @@ def gold(lines: List[str]) -> int:
 
 
 def solve() -> Tuple[str, int, int]:
-    lines = open(os.path.join(os.path.dirname(
-        __file__), "input"), "rt").readlines()
+    lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
 
     return "DAY 10", silver(lines), gold(lines)
