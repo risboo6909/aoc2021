@@ -1,4 +1,6 @@
 import os
+from result import Ok, Err, Result
+from typing import List, Tuple
 
 
 pairs = {
@@ -9,22 +11,22 @@ pairs = {
 }
 
 
-def process(line):
-    q = []
+def process(line: str) -> Result[List[str], str]:
+    q: List[str] = []
 
     for s in line:
         if s in pairs.values():
             if q and pairs[q[-1]] != s:
                 # error found
-                return s, "error"
+                return Err(s)
             q.pop()
         else:
             q.append(s)
 
-    return q, None
+    return Ok(q)
 
 
-def silver(lines):
+def silver(lines: List[str]) -> int:
 
     scores = {
         ")": 3,
@@ -36,14 +38,14 @@ def silver(lines):
     points = 0
 
     for line in lines:
-        s, err = process(line.strip())
-        if err == "error":
-            points += scores[s]
+        s = process(line.strip())
+        if isinstance(s, Err):
+            points += scores[s.value]
 
     return points
 
 
-def gold(lines):
+def gold(lines: List[str]) -> int:
 
     scores = {
         ")": 1,
@@ -57,12 +59,12 @@ def gold(lines):
     for line in lines:
 
         points = 0
-        q, err = process(line.strip())
+        q = process(line.strip())
 
-        if err is None:
+        if isinstance(q, Ok):
             # restore missing symbols
-            while q:
-                points = points * 5 + scores[pairs[q.pop()]]
+            while q.value:
+                points = points * 5 + scores[pairs[q.value.pop()]]
 
             all_points.append(points)
 
@@ -70,7 +72,8 @@ def gold(lines):
     return sorted(all_points)[middle_point_idx]
 
 
-def solve():
-    lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
+def solve() -> Tuple[str, int, int]:
+    lines = open(os.path.join(os.path.dirname(
+        __file__), "input"), "rt").readlines()
 
     return "DAY 10", silver(lines), gold(lines)
