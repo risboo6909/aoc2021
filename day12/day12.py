@@ -1,5 +1,9 @@
+import builtins
 import os
 from collections import defaultdict
+from functools import partial
+
+peq = partial(int.__eq__, 2)
 
 
 def dfs(nodes, cur_node, freq, twice):
@@ -12,7 +16,7 @@ def dfs(nodes, cur_node, freq, twice):
             if not twice:
                 # can't visit small caves more than once
                 return 0
-            elif cur_node == "start" or any(map(lambda v: v == 2, freq.values())):
+            elif cur_node == "start" or any(map(peq, freq.values())):
                 return 0
 
         freq[cur_node] += 1
