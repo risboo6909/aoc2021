@@ -23,22 +23,28 @@ def solve_rec(st, end, table, global_cache, scores, depth):
 
     cache = defaultdict(Counter)
 
+    # consider an example: 'NN', if we insert 'B' between two 'N' we get 'NBN'
+    
+    # this will be equal to 'B' (the thing we are inserting between 'N.N')
     to_insert = table[(st, end)]
 
+    # first traverse left 'NB'
     acc_left = solve_rec(st, to_insert, table, global_cache, scores, depth - 1)
     accumulate(cache, acc_left, st, end, depth)
 
+    # second traverse right 'BN'
     acc_right = solve_rec(to_insert, end, table, global_cache, scores, depth - 1)
     accumulate(cache, acc_right, st, end, depth)
 
+    # partial caches for nodes
     cache[key][to_insert] += 1
 
     # plain dict for convenient quantities computation
     scores[to_insert] += 1
 
     for key, counters in cache.items():
-        for l, c in counters.items():
-            global_cache[key].setdefault(l, c)
+        for inserted, count in counters.items():
+            global_cache[key].setdefault(inserted, count)
 
     return cache
 
