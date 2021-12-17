@@ -1,236 +1,82 @@
-from copy import deepcopy
 from collections import Counter, defaultdict
-from typing import DefaultDict, Optional, List, Tuple, Dict
+
 import os
 
 
-class Elem(object):
-
-    def __init__(self, label):
-        self.next = None
-        self.label = label
-
-    def insert_next(self, elem):
-        tmp = self.next
-        self.next = elem
-        elem.next = tmp
-        return elem
-
-
-def polymer_str(cur: Elem) -> str:
-    res = []
-    while cur is not None:
-        res.append(cur.label)
-        cur = cur.next
-    return ''.join(res)
-
-
-def silver(cur: Elem, table: Dict[str, str]):
-    cloned = deepcopy(cur)
-    for to in range(10):
-
-        cur = deepcopy(cloned)
-
-        for _ in range(to):
-
-            new_cur = new_head = Elem(cur.label)
-
-            while cur.next is not None:
-                pair = '{}{}'.format(cur.label, cur.next.label)
-                label_new = table[pair]
-
-                new_cur = new_cur.insert_next(Elem(label_new))
-                cur = cur.next
-                new_cur = new_cur.insert_next(Elem(cur.label))
-
-            cur = new_head
-
-        head = cur
-        freq = defaultdict(int)
-        while cur is not None:
-            freq[cur.label] += 1
-            cur = cur.next
-
-        print('iters: {}, max: {}, min: {}'.format(
-            to, max(freq.values()), min(freq.values())))
-
-    print(polymer_str(head))
-
-    return max(freq.values()) - min(freq.values())
-
-
-scores = defaultdict(int)
-cache = defaultdict(Counter)
-
-max_depth = 10
-global_cache = defaultdict(Counter)
-
-
 def accumulate(cache, acc, st, end, depth):
-    global global_cache
-    # cache[(st, end, depth)]
-    # for d in range(depth, -1, -1):
-    # for k, v in acc[(st, end, d)].items():
-    # cache[(st, end, depth)][k] += v
-    for (st2, end2, d), counters in acc.items():
-        for k, v in counters.items():
-            cache[(st2, end2, d)][k] += v
-            if d + 1 == depth:
-                cache[(st, end, depth)][k] += v
+    cache.update(acc)
+    for (_, _, d), counters in acc.items():
+        if d + 1 == depth:
+            cache[(st, end, depth)].update(counters)
 
 
-def accumulate2(st, end, depth):
-    global cache
-    for (st2, end2, d), counters in deepcopy(cache).items():
-        for k, v in counters.items():
-            cache[(st2, end2, d)][k] += v
-            if d + 1 == depth:
-                cache[(st, end, depth)][k] += v
-
-
-def update_scores(scores, cache, st, end, depth):
-    for k, v in cache[(st, end, depth)].items():
-        #print('hit: st:{}, end: {}, depth: {}, {} {}'.format(st, end, depth, k, v))
-        scores[k] += v
-
-
-def copy_depth(cache, st, end, depth):
-    res = defaultdict(Counter)
-    for (st2, end2, d), counters in cache.items():
-        if st2 == st and end2 == end and d == depth:
-            res[(st, end, d)] = counters
-
-    return res
-
-
-def solve_rec(st, end, table, depth):
-    global global_cache, scores
-
-    key = (st, end)
-    to_insert = table[key]
+def solve_rec(st, end, table, global_cache, scores, depth):
+    key = (st, end, depth)
 
     if depth == 0:
-        # print(key)
-        # print('st, ins, et: ', st,  to_insert, end)
-        return defaultdict(Counter), False
+        return defaultdict(Counter)
 
-    if (st, end, depth) in global_cache:
-        #     cache = defaultdict(Counter)
-        #     for (k, v, d), counter in global_cache.items():
-        #         if d > depth:
-        #             continue
-        #         for l, n in counter.items():
-        #             cache[(k, v, d)][l] += n
+    counter = global_cache.get(key)
+    if counter:
+        scores.update(counter)
+        return {key: counter}
 
-        counter = global_cache[(st, end, depth)]
-        for e, v in counter.items():
-            scores[e] += v
-
-        scores[to_insert[0]] += 1
-
-        res = {(st, end, depth): counter}
-        return res, True
-
-        # if (st, end, depth) in cache:
-        #     counter = cache[(st, end, depth)]
-        #     # for e, v in counter.items():
-        #     #     scores[e] += v
-        #     return scores
-
-    cache_left = defaultdict(Counter)
-    cache_right = defaultdict(Counter)
     cache = defaultdict(Counter)
 
-    acc_left, from_cache_left = solve_rec(st, to_insert[0], table, depth-1)
-    if not from_cache_left:
-        accumulate(cache_left, acc_left, st, end, depth)
-    else:
-        cache_left = acc_left
-    acc_right, from_cache_right = solve_rec(to_insert[0], end, table, depth-1)
-    if not from_cache_right:
-        accumulate(cache_right, acc_right, st, end, depth)
-    else:
-        cache_right = acc_right
+    to_insert = table[(st, end)]
 
-    if not from_cache_left:
-        for (k, v, d), counter in cache_left.items():
-            for l, n in counter.items():
-                global_cache[(k, v, d)][l] = n
+    acc_left = solve_rec(st, to_insert, table, global_cache, scores, depth - 1)
+    accumulate(cache, acc_left, st, end, depth)
 
-    if not from_cache_right:
-        for (k, v, d), counter in cache_right.items():
-            for l, n in counter.items():
-                global_cache[(k, v, d)][l] = n
+    acc_right = solve_rec(to_insert, end, table, global_cache, scores, depth - 1)
+    accumulate(cache, acc_right, st, end, depth)
 
-    for (k, v, d), counter in cache_left.items():
-        cache[(k, v, d)] += counter
+    cache[key][to_insert] += 1
 
-    for (k, v, d), counter in cache_right.items():
-        cache[(k, v, d)] += counter
+    # plain dict for convenient quantities computation
+    scores[to_insert] += 1
 
-    cache[(st, end, depth)][to_insert[0]] += 1
+    for key, counters in cache.items():
+        for l, c in counters.items():
+            global_cache[key].setdefault(l, c)
 
-    scores[to_insert[0]] += 1
+    return cache
 
-    return cache, False
 
-    # print('depth: {}, left: {},  right: {}'.format(depth, acc_left, acc_right))
-    # if acc_left is not None:
-    #     accumulate(cache, acc_left, st, end, depth)
+def find_maxmin_delta(sequence, table, iterations):
+    scores = Counter()
+    global_cache = defaultdict(Counter)
 
-    # if acc_right is not None:
-    #     accumulate(cache, acc_right, st, end, depth)
+    for st, end in zip(sequence, sequence[1:]):
+        solve_rec(st, end, table, global_cache, scores, iterations)
 
-    # print(global_cache)
+    for s in sequence:
+        scores[s] += 1
+
+    return max(scores.values()) - min(scores.values())
+
+
+def silver(init, table):
+    return find_maxmin_delta(init, table, 10)
 
 
 def gold(init, table):
-    global global_cache
-    for st, end in zip(init, init[1:]):
-        #print(st, end)
-        solve_rec(st, end, table, max_depth)
-        # print(cache[('N', 'N', 10)], cache[(
-        #     'N', 'C', 10)], cache[('C', 'B', 10)])
-    print(global_cache)
-    print(scores)
+    return find_maxmin_delta(init, table, 40)
 
 
-def parse(lines: List[str]) -> Tuple[Optional[Elem], Dict[str, str]]:
-    line = lines[0]
-    prev = head = None
-
-    # create initial polymer
-    for e in line.strip():
-        cur = Elem(e)
-
-        if head is None:
-            head = cur
-
-        if prev is not None:
-            prev.insert_next(cur)
-
-        prev = cur
-
+def parse(lines):
     table = {}
+    initial = list(lines[0].strip())
 
     # read transformation rules
     for line in lines[2:]:
-        left, right = line.strip().split(' -> ')
-        table[(left[0], left[1])] = [right]
+        left, right = line.strip().split(" -> ")
+        table[(left[0], left[1])] = right
 
-    # for line in lines[2:]:
-    #     left, right = line.strip().split(' -> ')
-    #     table[left] = right
-
-    return head, table
+    return initial, table
 
 
 def solve():
-    lines = open(os.path.join(os.path.dirname(
-        __file__), "input"), "rt").readlines()
-
-    head, table = parse(lines)
-
-    # return "DAY 14", silver(head, table), 0
-    gold(['N', 'N', 'C', 'B'], table)
-    return "DAY14", 0, 0
+    lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
+    initial, table = parse(lines)
+    return "DAY14", silver(initial, table), gold(initial, table)
