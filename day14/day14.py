@@ -24,7 +24,7 @@ def solve_rec(st, end, table, global_cache, scores, depth):
     cache = defaultdict(Counter)
 
     # consider an example: 'NN', if we insert 'B' between two 'N' we get 'NBN'
-    
+
     # this will be equal to 'B' (the thing we are inserting between 'N.N')
     to_insert = table[(st, end)]
 
@@ -85,4 +85,5 @@ def parse(lines):
 def solve():
     lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
     initial, table = parse(lines)
+
     return "DAY14", silver(initial, table), gold(initial, table)

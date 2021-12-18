@@ -109,4 +109,5 @@ def parse(lines):
 def solve():
     lines = open(os.path.join(os.path.dirname(__file__), "input"), "rt").readlines()
     table, table_big = parse(lines)
+
     return "DAY15", silver_and_gold(table), silver_and_gold(table_big)
