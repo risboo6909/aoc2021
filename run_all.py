@@ -16,6 +16,7 @@ import day15.day15 as d15
 import day16.day16 as d16
 import day17.day17 as d17
 import day18.day18 as d18
+import day19.day19 as d19
 
 
 def show_solution(solution_tuple):
@@ -43,6 +44,7 @@ if __name__ == "__main__":
         d16,
         d17,
         d18,
+        d19,
     ]
 
     for problem in problems:
