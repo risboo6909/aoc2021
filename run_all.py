@@ -1,3 +1,5 @@
+import time
+
 import day1.day1 as d1
 import day2.day2 as d2
 import day3.day3 as d3
@@ -17,6 +19,7 @@ import day16.day16 as d16
 import day17.day17 as d17
 import day18.day18 as d18
 import day19.day19 as d19
+import day20.day20 as d20
 
 
 def show_solution(solution_tuple):
@@ -45,7 +48,10 @@ if __name__ == "__main__":
         d17,
         d18,
         d19,
+        d20,
     ]
 
+    st = time.time()
     for problem in problems:
         show_solution(problem.solve())
+    print("\ntime taken: {:.2f} sec.".format(time.time() - st))
