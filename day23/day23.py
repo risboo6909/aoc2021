@@ -1,6 +1,16 @@
 import os
 import copy
+import sys
 
+sys.setrecursionlimit(30000)
+
+
+energy = {
+    'A': 1,
+    'B': 10,
+    'C': 100,
+    'D': 1000,
+}
 
 def get(xs, i):
     if len(xs) > i:
@@ -14,7 +24,7 @@ class Board(object):
         'A': 3,
         'B': 5,
         'C': 7,
-        'D': 9
+        'D': 9,
     }
 
     def __init__(self, hall, rooms):
@@ -62,7 +72,7 @@ class Board(object):
         item = self.rooms[room_idx].pop()
         self.hall[to_idx] = item
 
-        return True
+        return energy[item] * (abs(room_idx - to_idx) + 2-len(self.rooms[room_idx]))
 
     # get item from the hall and move it into the room
     def push_from_hall(self, from_idx, room_idx):
@@ -89,14 +99,17 @@ class Board(object):
         self.rooms[room_idx].append(item)
         self.hall[from_idx] = '.'
 
-        return True
+        return energy[item] * (abs(from_idx - room_idx) + 3-len(self.rooms[room_idx]))
 
     # get item from one room and put it into another room
     def room_to_room(self, from_idx, to_idx):
         assert from_idx in self.rooms
         assert to_idx in self.rooms
-        assert len(self.rooms[from_idx]) > 0
-        assert len(self.rooms[to_idx]) < 2
+        if len(self.rooms[from_idx]) == 0:
+            return False
+            
+        if len(self.rooms[to_idx]) == 2:
+            return False
         # assert self.home_indices[self.rooms[from_idx][-1]] == to_idx
 
         if len(self.rooms[to_idx]) == 1 and self.room_indices[self.rooms[to_idx][-1]] != to_idx:
@@ -105,32 +118,77 @@ class Board(object):
         item = self.rooms[from_idx].pop()
         self.rooms[to_idx].append(item)
 
+        return energy[item] * (abs(from_idx - to_idx) + 2-len(self.rooms[from_idx]) + 3-len(self.rooms[to_idx]))
+
+
+    def is_done(self):
+        for label, room_idx in Board.room_indices.items():
+            if len(self.rooms[room_idx]) < 2 or self.rooms[room_idx][0] != label or self.rooms[room_idx][1] != label:
+                return False
+
         return True
 
 
 def silver(board):
-    visited = set()
+    visited = {}
+    inf = float('inf')
+    min_so_far = [inf]
 
-    def rec(cloned_board):
+    def rec(cloned_board, total_energy):
+
+        if cloned_board.is_done():
+            min_so_far[0] = total_energy
+            print(total_energy)
+            print(cloned_board, end='\n')
+            return
 
         # pop from room to hall
-        for room_idx in Board.room_indices.values():
-            board = cloned_board.clone()
-            for to_idx in range(1, 13):
-                if board.pop_to_hall(room_idx, to_idx) and hash(board) not in visited:
-                    visited.add(hash(board))
-                    rec(board)
+        board = cloned_board.clone()
+        for room_idx in Board.room_indices.values(): 
+            for to_idx in range(1, 12):
+                energy_used = board.pop_to_hall(room_idx, to_idx)
+                if energy_used:
+                    new_energy = total_energy + energy_used
+                    # if new_energy >= min_so_far[0]:
+                    #     continue
+                    if energy_used and new_energy < visited.get(hash(board), inf):
+                        visited[hash(board)] = new_energy
+                        rec(board, new_energy)
                     board = cloned_board.clone()
 
         # move from hall to room
-        for from_idx in range(1, 13):
+        board = cloned_board.clone()
+        for from_idx in range(1, 12):
             for room_idx in Board.room_indices.values():
-                if board.push_from_hall(from_idx, room_idx) and hash(board) not in visited:
-                    visited.add(hash(board))
-                    rec(board)
+                energy_used = board.push_from_hall(from_idx, room_idx)
+                if energy_used:
+                    new_energy = total_energy + energy_used
+                    # if new_energy >= min_so_far[0]:
+                    #     board = cloned_board.clone()
+                    #     continue
+                    if energy_used and new_energy < visited.get(hash(board), inf):     
+                        visited[hash(board)] = new_energy
+                        rec(board, new_energy)
                     board = cloned_board.clone()
 
-    rec(board)
+        # # move from room to room
+        # board = cloned_board.clone()
+        # for from_room_idx in Board.room_indices.values():
+        #     for to_room_idx in Board.room_indices.values():
+        #         if from_room_idx == to_room_idx:
+        #             continue
+        #         energy_used = board.room_to_room(from_room_idx, to_room_idx)
+        #         if energy_used:
+        #             new_energy = total_energy + energy_used
+        #             # if new_energy >= min_so_far[0]:
+        #             #     board = cloned_board.clone()
+        #             #     continue
+        #             if energy_used and new_energy < visited.get(hash(board), inf):
+        #                 visited[hash(board)] = new_energy
+        #                 rec(board, new_energy)
+        #             board = cloned_board.clone()
+
+    rec(board, 0)
 
 
 def gold(parsed):
