@@ -136,6 +136,14 @@ def silver(board):
 
     def rec(cloned_board, total_energy):
 
+        if total_energy >= min_so_far[0]:
+            return
+
+        if total_energy >= visited.get(hash(cloned_board), inf):
+            return
+
+        visited[hash(cloned_board)] = total_energy
+
         if cloned_board.is_done():
             min_so_far[0] = total_energy
             print(total_energy)
@@ -148,27 +156,20 @@ def silver(board):
             for to_idx in range(1, 12):
                 energy_used = board.pop_to_hall(room_idx, to_idx)
                 if energy_used:
-                    new_energy = total_energy + energy_used
-                    # if new_energy >= min_so_far[0]:
-                    #     continue
-                    if energy_used and new_energy < visited.get(hash(board), inf):
-                        visited[hash(board)] = new_energy
-                        rec(board, new_energy)
+                    new_energy = total_energy + energy_used                    
+                    rec(board, new_energy)
                     board = cloned_board.clone()
 
         # move from hall to room
         board = cloned_board.clone()
         for from_idx in range(1, 12):
+            if board.hall[from_idx] == '.':
+                continue
             for room_idx in Board.room_indices.values():
                 energy_used = board.push_from_hall(from_idx, room_idx)
                 if energy_used:
                     new_energy = total_energy + energy_used
-                    # if new_energy >= min_so_far[0]:
-                    #     board = cloned_board.clone()
-                    #     continue
-                    if energy_used and new_energy < visited.get(hash(board), inf):     
-                        visited[hash(board)] = new_energy
-                        rec(board, new_energy)
+                    rec(board, new_energy)
                     board = cloned_board.clone()
 
         # # move from room to room
@@ -180,16 +181,11 @@ def silver(board):
         #         energy_used = board.room_to_room(from_room_idx, to_room_idx)
         #         if energy_used:
         #             new_energy = total_energy + energy_used
-        #             # if new_energy >= min_so_far[0]:
-        #             #     board = cloned_board.clone()
-        #             #     continue
-        #             if energy_used and new_energy < visited.get(hash(board), inf):
-        #                 visited[hash(board)] = new_energy
-        #                 rec(board, new_energy)
+        #             rec(board, new_energy)
         #             board = cloned_board.clone()
 
     rec(board, 0)
-
+    print(min_so_far)
 
 def gold(parsed):
     pass
