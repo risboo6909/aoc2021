@@ -24,19 +24,19 @@ class Board(object):
         'D': 9,
     }
 
-    def __init__(self, hall, rooms):
+    def __init__(self, hall, rooms, room_size):
         self.hall = hall
         self.rooms = rooms
+        self.room_size = room_size
 
     def __str__(self):
-        first_room_idx = 3
         res = '#'*len(self.hall)+'\n'
         res += ''.join((s for s in self.hall))+'\n'
 
         res += ''.join((get(self.rooms[i], -1)
                        if i in self.rooms else '#' for i in range(13)))+'\n'
 
-        for k in range(len(self.rooms[first_room_idx])-2, -1, -1):
+        for k in range(self.room_size-2, -1, -1):
             res += '  #'+''.join((get(self.rooms[i], k)
                                   if i in self.rooms else '#' for i in range(3, 10))) + '#  \n'
         res += '  #########  '
@@ -50,7 +50,13 @@ class Board(object):
         return self.hall == other.hall and self.rooms == other.rooms
 
     def clone(self):
-        return Board(self.hall[:], {k: v[:] for k, v in self.rooms.items()})
+        return Board(self.hall[:], {k: v[:] for k, v in self.rooms.items()}, self.room_size)
+
+    def is_proper_room(self, room_idx):
+        for amphipod in self.rooms[room_idx]:
+            if Board.room_indices[amphipod] != room_idx:
+                return False
+        return True
 
     def has_obstacle(self, from_idx, to_idx):
         if to_idx >= from_idx:
@@ -67,9 +73,6 @@ class Board(object):
     # pops item from room_idx and place it to dest_idx in the hall
     # return True if success and False otherwise
     def pop_to_hall(self, room_idx, to_idx):
-        assert room_idx in self.rooms
-        assert to_idx > 0 and to_idx < 13
-
         if self.hall[to_idx] != '.':
             return False
 
@@ -85,26 +88,22 @@ class Board(object):
         item = self.rooms[room_idx].pop()
         self.hall[to_idx] = item
 
-        return energy[item] * (abs(room_idx - to_idx) + 2-len(self.rooms[room_idx]))
+        return energy[item] * (abs(room_idx - to_idx) + self.room_size-len(self.rooms[room_idx]))
 
     # get item from the hall and move it into the room
     def push_from_hall(self, from_idx, to_room_idx):
-        assert to_room_idx in self.rooms
-        assert from_idx > 0 and from_idx < 13
-        # assert Board.home_indices[self.hall[from_idx]] == room_idx
-
         if self.hall[from_idx] == '.':
             return False
 
-        if len(self.rooms[to_room_idx]) == 2:
+        if len(self.rooms[to_room_idx]) == self.room_size:
             return False
 
         if Board.room_indices[self.hall[from_idx]] != to_room_idx:
             return False
 
-        if len(self.rooms[to_room_idx]) == 1 and self.room_indices[self.rooms[to_room_idx][-1]] != to_room_idx:
+        if not self.is_proper_room(to_room_idx):
             return False
-
+            
         if self.has_obstacle(from_idx, to_room_idx):
             return False
 
@@ -112,44 +111,43 @@ class Board(object):
         self.rooms[to_room_idx].append(item)
         self.hall[from_idx] = '.'
 
-        return energy[item] * (abs(from_idx - to_room_idx) + 3-len(self.rooms[to_room_idx]))
+        return energy[item] * (abs(from_idx - to_room_idx) + self.room_size-len(self.rooms[to_room_idx])+1)
 
     # get item from one room and put it into another room
-    def room_to_room(self, from_idx, to_idx):
-        assert from_idx in self.rooms
-        assert to_idx in self.rooms
-
-        if from_idx == to_idx:
+    def room_to_room(self, from_room_idx, to_room_idx):
+        if from_room_idx == to_room_idx:
             return False
 
-        if len(self.rooms[from_idx]) == 0:
+        if len(self.rooms[from_room_idx]) == 0:
             return False
 
-        if len(self.rooms[to_idx]) == 2:
-            return False
-        # assert self.home_indices[self.rooms[from_idx][-1]] == to_idx
-
-        if len(self.rooms[to_idx]) == 1 and self.room_indices[self.rooms[to_idx][-1]] != to_idx:
+        if len(self.rooms[to_room_idx]) == self.room_size:
             return False
 
-        if self.has_obstacle(from_idx, to_idx):
+        if not self.is_proper_room(to_room_idx):
             return False
 
-        item = self.rooms[from_idx].pop()
-        self.rooms[to_idx].append(item)
+        if self.has_obstacle(from_room_idx, to_room_idx):
+            return False
 
-        l = len(self.rooms[from_idx])
-        return energy[item] * (abs(from_idx - to_idx) + 2-l + 3-l)
+        item = self.rooms[from_room_idx].pop()
+        self.rooms[to_room_idx].append(item)
+
+        l = len(self.rooms[from_room_idx])
+        return energy[item] * (abs(from_room_idx - to_room_idx) + self.room_size-l + self.room_size+1-l)
 
     def is_done(self):
         for label, room_idx in Board.room_indices.items():
-            if len(self.rooms[room_idx]) < 2 or self.rooms[room_idx][0] != label or self.rooms[room_idx][1] != label:
+            if len(self.rooms[room_idx]) < self.room_size:
                 return False
-
+            for i in range(self.room_size):
+                if self.rooms[room_idx][i] != label:
+                    return False
         return True
 
 
-def silver(board):
+def solver(board):
+
     visited = {}
 
     min_so_far = [float('inf')]
@@ -165,7 +163,7 @@ def silver(board):
         if total_energy >= visited.get(cloned_board, min_so_far[0]):
             return
 
-        if depth > 16:
+        if depth > 40:
             return
 
         visited[cloned_board] = total_energy
@@ -207,11 +205,15 @@ def silver(board):
 
     rec(board, 0, 0)
 
-    print(min_so_far)
+    return min_so_far[0]
+
+
+def silver(board):
+    return solver(board)
 
 
 def gold(board):
-    print(board)
+    return solver(board)
 
 
 def parse(lines, room_size):
@@ -228,7 +230,7 @@ def parse(lines, room_size):
     for idx, room in zip(room_indices, rooms):
         indices_2_rooms[idx] = room
 
-    board = Board(hall, indices_2_rooms)
+    board = Board(hall, indices_2_rooms, room_size)
 
     return board
 
@@ -242,7 +244,7 @@ def solve():
         __file__), "input_gold"), "rt").readlines()
     board_gold = parse(lines_gold, room_size=4)
 
-    result_silver = silver(board_silver)
+    result_silver = 1 or silver(board_silver)
     result_gold = gold(board_gold)
 
     return "DAY23", result_silver, result_gold
