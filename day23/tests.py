@@ -13,7 +13,7 @@ input = """
 class TestBoardMethods(unittest.TestCase):
 
     def setUp(self):
-        self.board = parse(input.split())
+        self.board = parse(input.split(), 2)
 
     def test_pop_to_hall(self):
         assert self.board.pop_to_hall(7, 4) == 40

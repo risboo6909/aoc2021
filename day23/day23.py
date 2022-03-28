@@ -33,7 +33,7 @@ class Board(object):
         res = '#'*len(self.hall)+'\n'
         res += ''.join((s for s in self.hall))+'\n'
 
-        res += ''.join((get(self.rooms[i], -1)
+        res += ''.join((get(self.rooms[i], self.room_size-1)
                        if i in self.rooms else '#' for i in range(13)))+'\n'
 
         for k in range(self.room_size-2, -1, -1):
@@ -52,9 +52,12 @@ class Board(object):
     def clone(self):
         return Board(self.hall[:], {k: v[:] for k, v in self.rooms.items()}, self.room_size)
 
-    def is_proper_room(self, room_idx):
-        for amphipod in self.rooms[room_idx]:
-            if Board.room_indices[amphipod] != room_idx:
+    def is_proper_room(self, req_room_idx, to_room_idx):
+        if req_room_idx != to_room_idx:
+            return False
+
+        for amphipod in self.rooms[to_room_idx]:
+            if Board.room_indices[amphipod] != to_room_idx:
                 return False
         return True
 
@@ -101,9 +104,9 @@ class Board(object):
         if Board.room_indices[self.hall[from_idx]] != to_room_idx:
             return False
 
-        if not self.is_proper_room(to_room_idx):
+        if not self.is_proper_room(Board.room_indices[self.hall[from_idx]], to_room_idx):
             return False
-            
+
         if self.has_obstacle(from_idx, to_room_idx):
             return False
 
@@ -124,7 +127,7 @@ class Board(object):
         if len(self.rooms[to_room_idx]) == self.room_size:
             return False
 
-        if not self.is_proper_room(to_room_idx):
+        if not self.is_proper_room(Board.room_indices[self.rooms[from_room_idx][-1]], to_room_idx):
             return False
 
         if self.has_obstacle(from_room_idx, to_room_idx):
@@ -133,8 +136,7 @@ class Board(object):
         item = self.rooms[from_room_idx].pop()
         self.rooms[to_room_idx].append(item)
 
-        l = len(self.rooms[from_room_idx])
-        return energy[item] * (abs(from_room_idx - to_room_idx) + self.room_size-l + self.room_size+1-l)
+        return energy[item] * (abs(from_room_idx - to_room_idx) + self.room_size-len(self.rooms[from_room_idx]) + self.room_size-len(self.rooms[to_room_idx])+1)
 
     def is_done(self):
         for label, room_idx in Board.room_indices.items():
@@ -146,7 +148,7 @@ class Board(object):
         return True
 
 
-def solver(board):
+def solver(board, max_depth):
 
     visited = {}
 
@@ -163,17 +165,13 @@ def solver(board):
         if total_energy >= visited.get(cloned_board, min_so_far[0]):
             return
 
-        if depth > 40:
+        if depth > max_depth:
             return
 
         visited[cloned_board] = total_energy
 
-        #print(cloned_board, total_energy, end='\n\n')
-
         if cloned_board.is_done():
             min_so_far[0] = total_energy
-            print(total_energy)
-            print(cloned_board, end='\n')
             return
 
         # move from hall to room
@@ -209,11 +207,11 @@ def solver(board):
 
 
 def silver(board):
-    return solver(board)
+    return solver(board, 16)
 
 
 def gold(board):
-    return solver(board)
+    return solver(board, 32)
 
 
 def parse(lines, room_size):
@@ -244,7 +242,7 @@ def solve():
         __file__), "input_gold"), "rt").readlines()
     board_gold = parse(lines_gold, room_size=4)
 
-    result_silver = 1 or silver(board_silver)
+    result_silver = silver(board_silver)
     result_gold = gold(board_gold)
 
     return "DAY23", result_silver, result_gold
