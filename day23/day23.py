@@ -91,7 +91,7 @@ class Board(object):
         item = self.rooms[room_idx].pop()
         self.hall[to_idx] = item
 
-        return energy[item] * (abs(room_idx - to_idx) + self.room_size-len(self.rooms[room_idx]))
+        return energy[item] * (abs(room_idx-to_idx) + self.room_size-len(self.rooms[room_idx]))
 
     # get item from the hall and move it into the room
     def push_from_hall(self, from_idx, to_room_idx):
@@ -114,29 +114,7 @@ class Board(object):
         self.rooms[to_room_idx].append(item)
         self.hall[from_idx] = '.'
 
-        return energy[item] * (abs(from_idx - to_room_idx) + self.room_size-len(self.rooms[to_room_idx])+1)
-
-    # get item from one room and put it into another room
-    def room_to_room(self, from_room_idx, to_room_idx):
-        if from_room_idx == to_room_idx:
-            return False
-
-        if len(self.rooms[from_room_idx]) == 0:
-            return False
-
-        if len(self.rooms[to_room_idx]) == self.room_size:
-            return False
-
-        if not self.is_proper_room(Board.room_indices[self.rooms[from_room_idx][-1]], to_room_idx):
-            return False
-
-        if self.has_obstacle(from_room_idx, to_room_idx):
-            return False
-
-        item = self.rooms[from_room_idx].pop()
-        self.rooms[to_room_idx].append(item)
-
-        return energy[item] * (abs(from_room_idx - to_room_idx) + self.room_size-len(self.rooms[from_room_idx]) + self.room_size-len(self.rooms[to_room_idx])+1)
+        return energy[item] * (abs(from_idx-to_room_idx) + self.room_size-len(self.rooms[to_room_idx])+1)
 
     def is_done(self):
         for label, room_idx in Board.room_indices.items():
@@ -188,15 +166,6 @@ def solver(board, max_depth):
         for room_idx in room_indices:
             for to_idx in hall_range:
                 energy_used = board.pop_to_hall(room_idx, to_idx)
-                if energy_used:
-                    rec(board, total_energy + energy_used, depth+1)
-                    board = cloned_board.clone()
-
-        # move from room to room
-        board = cloned_board.clone()
-        for from_room_idx in room_indices:
-            for to_room_idx in room_indices:
-                energy_used = board.room_to_room(from_room_idx, to_room_idx)
                 if energy_used:
                     rec(board, total_energy + energy_used, depth+1)
                     board = cloned_board.clone()
