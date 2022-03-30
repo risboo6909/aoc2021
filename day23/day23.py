@@ -74,15 +74,11 @@ class Board(object):
         return False
 
     # pops item from room_idx and place it to dest_idx in the hall
-    # return True if success and False otherwise
     def pop_to_hall(self, room_idx, to_idx):
         if self.hall[to_idx] != '.':
             return False
 
         if len(self.rooms[room_idx]) == 0:
-            return False
-
-        if to_idx in self.rooms:
             return False
 
         if self.has_obstacle(room_idx, to_idx):
@@ -101,10 +97,12 @@ class Board(object):
         if len(self.rooms[to_room_idx]) == self.room_size:
             return False
 
-        if Board.room_indices[self.hall[from_idx]] != to_room_idx:
+        amphipod_home_idx = Board.room_indices[self.hall[from_idx]]
+
+        if amphipod_home_idx != to_room_idx:
             return False
 
-        if not self.is_proper_room(Board.room_indices[self.hall[from_idx]], to_room_idx):
+        if not self.is_proper_room(amphipod_home_idx, to_room_idx):
             return False
 
         if self.has_obstacle(from_idx, to_room_idx):
@@ -137,13 +135,13 @@ def solver(board, max_depth):
 
     def rec(cloned_board, total_energy, depth):
 
+        if depth > max_depth:
+            return
+
         if total_energy >= min_so_far[0]:
             return
 
         if total_energy >= visited.get(cloned_board, min_so_far[0]):
-            return
-
-        if depth > max_depth:
             return
 
         visited[cloned_board] = total_energy
