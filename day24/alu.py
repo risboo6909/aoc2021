@@ -1,4 +1,6 @@
 from collections import defaultdict
+from copy import deepcopy
+from numpy import isin
 
 """
 The ALU is a four-dimensional processing unit: it has integer variables w, x, y, and z. These variables all start with the value 0. The ALU also supports six instructions:
@@ -138,11 +140,38 @@ class ALU(object):
             return OpEql(self.reg_data, arg1, arg2)
 
         assert False, 'Operator not recognized: {}'.format(op_raw)
- 
+
+    def split_program(self, split_at):
+        digit_no = 0
+        head, tail = [], []
+        cur_part = head
+        
+        for op in self.program:
+            if isinstance(op, OpInp):
+                digit_no += 1
+            if digit_no >= split_at+1:
+                cur_part = tail
+            cur_part.append(op)
+
+        head_alu = ALU()
+        head_alu.set_program(head)
+
+        tail_alu = ALU()
+        tail_alu.set_program(tail)
+        
+        return head_alu, tail_alu
+
     def parse_program(self, lines):
         for line in lines:
             op = self.choose_op(line)
             self.program.append(op)
+
+    def set_program(self, program):
+        for op in program:
+            op_new = deepcopy(op)
+            op_new.reg_data = self.reg_data
+            op_new.inp_stream = self.input_stream
+            self.program.append(op_new)
 
     def run_program(self):
         for op in self.program:
