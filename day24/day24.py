@@ -7,6 +7,8 @@ from .alu import ALU
 
 #INF = 99999999999999
 
+INP_LEN = 14
+
 numbers = [k for k in range(1, 10) for x in range(1)]
 
 def choose_number():
@@ -61,15 +63,15 @@ def silver_ga(alu, best):
     return ga.best_individual()[1]
 
 def compute_uniq(alu, split_at_pos):
-    uniq_res = set()
+    uniq_results = defaultdict(list)
 
     for n in range(int('1'*split_at_pos), 10**split_at_pos):
         alu.reset()
         alu.set_input_stream(*list(map(int, str(n))))
         alu.run_program()
-        uniq_res.add(alu.reg_data['z'])
+        uniq_results[alu.reg_data['z']].append(str(n))
 
-    return uniq_res
+    return uniq_results
 
 def silver(alu):
     # best = [choose_number() for _ in range(14)]
@@ -99,26 +101,80 @@ def silver(alu):
 
     # return False
 
-    start_split = 1
-    head_alu, _ = alu.split_program(start_split)
-    uniq_results = compute_uniq(head_alu, start_split)
+    # start_split = 1
 
-    for split_pos in range(start_split+1, 15):
+    # head_alu, _ = alu.split_program(start_split)
+    # uniq_results = compute_uniq(head_alu, start_split)
+
+    print('phase 1...')
+
+    cur_set = {0: []}
+    compute_until = 15
+
+    num_range = [list(map(int, str(n))) for n in range(11, 100) 
+                        if 0 not in str(n)]
+
+    for split_pos in range(1, compute_until, 1):
+
+        # get just one block at split_pos
         head_alu, _ = alu.split_program(split_pos)
         _, tail_alu = head_alu.split_program(split_pos-1)
-        new_results = set()
 
-        print(len(uniq_results), split_pos-1)
+        new_set = defaultdict(list)
 
-        for n in range(1, 10):
-            for prev_res in uniq_results:
+        for prev_res, input_digits in cur_set.items():
+
+            for n in num_range:
                 tail_alu.reset()
-                tail_alu.set_input_stream(n)
+                tail_alu.set_input_stream(*n)
                 tail_alu.reg_data['z'] = prev_res
                 tail_alu.run_program()
-                new_results.add(tail_alu.reg_data['z'])
 
-        uniq_results = new_results
+                res = tail_alu.reg_data['z']
+
+                if split_pos < 11:
+                    new_set[res] = []
+                    continue
+
+                if split_pos == 14 and res != 0:
+                    continue
+
+                if input_digits:
+                    new_set[res].extend([10*k+n for k in input_digits])
+                else:
+                    new_set[res].append(n)
+
+        cur_set.clear()
+        for k, v in new_set.items():
+            cur_set[k] = list(set(v))
+        
+        print("{} possible outcomes for {} blocks".format(len(cur_set), split_pos))
+
+    print(cur_set[0])
+
+    print('\nphase 2...')
+
+    # get rest blocks
+    # _, tail_alu = alu.split_program(compute_until)
+    # upper_range = int(''.join(['9'] * (INP_LEN - compute_until)))
+    # lower_range = int(''.join(['1'] * (INP_LEN - compute_until)))
+
+    # num_range = [list(map(int, str(n))) for n in range(upper_range, lower_range-1, -1) 
+    #                         if 0 not in list(map(int, str(n)))]
+
+    # print(len(cur_set.keys()))
+
+    # for z, prefixes in cur_set.items():
+    #     print(z)
+    #     for n in num_range:
+    #         tail_alu.reset()
+    #         tail_alu.set_input_stream(*n)
+    #         tail_alu.reg_data['z'] = z
+    #         tail_alu.run_program()
+    #         if tail_alu.reg_data['z'] == 0:
+    #             return "yeess"
+
+    #return max(cur_set[0], key=lambda v: int(v))
 
 def gold(alu):
     pass

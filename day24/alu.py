@@ -141,6 +141,8 @@ class ALU(object):
 
         assert False, 'Operator not recognized: {}'.format(op_raw)
 
+    # returns prefix which includes split point
+    # and suffix which includes everything else
     def split_program(self, split_at):
         digit_no = 0
         head, tail = [], []
