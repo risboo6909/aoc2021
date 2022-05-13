@@ -37,7 +37,7 @@ def compute(alu):
                         int(item[pos]) for item in map(str, collected_numbers)
                     )
 
-            print("values to check: {}".format(to_check))
+            # print("values to check: {}".format(to_check))
 
             for prev_z, input_digits in cur_set.items():
 
@@ -69,9 +69,9 @@ def compute(alu):
                         new_set[z].add(n)
 
             cur_set = new_set
-            print(
-                "{} possible outcomes for {} digits\n".format(len(cur_set), split_pos)
-            )
+            # print(
+            #     "{} possible outcomes for {} digits\n".format(len(cur_set), split_pos)
+            # )
 
         collected_numbers = cur_set[0]
         # print("\n\n", cur_set[0], "\n\n")
