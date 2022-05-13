@@ -1,6 +1,5 @@
 from collections import defaultdict
 from copy import deepcopy
-from numpy import isin
 
 """
 The ALU is a four-dimensional processing unit: it has integer variables w, x, y, and z. These variables all start with the value 0. The ALU also supports six instructions:
@@ -14,7 +13,7 @@ eql a b - If the value of a and b are equal, then store the value 1 in variable 
 """
 
 # existing registers
-registers = {'w', 'x', 'y', 'z'}
+registers = {"w", "x", "y", "z"}
 
 
 def is_number(s):
@@ -23,6 +22,7 @@ def is_number(s):
         return True
     except ValueError:
         return False
+
 
 class OpInp(object):
     def __init__(self, reg_data, inp_stream, dst):
@@ -51,6 +51,7 @@ class OpAdd(object):
         else:
             self.reg_data[self.dst] += self.reg_data[self.b]
 
+
 class OpMul(object):
     def __init__(self, reg_data, dst, b):
         assert dst in registers
@@ -58,12 +59,13 @@ class OpMul(object):
         self.reg_data = reg_data
         self.dst = dst
         self.b = b
-    
+
     def compute(self):
         if is_number(self.b):
             self.reg_data[self.dst] *= int(self.b)
         else:
             self.reg_data[self.dst] *= self.reg_data[self.b]
+
 
 class OpDiv(object):
     def __init__(self, reg_data, dst, b):
@@ -81,6 +83,7 @@ class OpDiv(object):
 
         self.reg_data[self.dst] = int(self.reg_data[self.dst])
 
+
 class OpMod(object):
     def __init__(self, reg_data, dst, b):
         assert dst in registers
@@ -95,6 +98,7 @@ class OpMod(object):
         else:
             self.reg_data[self.dst] %= self.reg_data[self.b]
 
+
 class OpEql(object):
     def __init__(self, reg_data, dst, b):
         assert dst in registers
@@ -107,51 +111,52 @@ class OpEql(object):
         if is_number(self.b):
             self.reg_data[self.dst] = int(self.reg_data[self.dst] == int(self.b))
         else:
-            self.reg_data[self.dst] = int(self.reg_data[self.dst] == self.reg_data[self.b])
+            self.reg_data[self.dst] = int(
+                self.reg_data[self.dst] == self.reg_data[self.b]
+            )
 
 
 class ALU(object):
-
     def __init__(self):
         self.input_stream = []
         self.program = []
         self.reg_data = defaultdict(int)
-        
+
     def reset(self):
         self.input_stream.clear()
         self.reg_data.clear()
 
     def choose_op(self, op_raw):
-        op_name, args = op_raw.strip().split(' ', maxsplit=1)
+        op_name, args = op_raw.strip().split(" ", maxsplit=1)
         if len(args.split()) == 1:
             # only input can have one argument all the others have two
             return OpInp(self.reg_data, self.input_stream, args)
 
         arg1, arg2 = args.split()
-        if op_name == 'add':
+        if op_name == "add":
             return OpAdd(self.reg_data, arg1, arg2)
-        elif op_name == 'mul':
+        elif op_name == "mul":
             return OpMul(self.reg_data, arg1, arg2)
-        elif op_name == 'div':
+        elif op_name == "div":
             return OpDiv(self.reg_data, arg1, arg2)
-        elif op_name == 'mod':
+        elif op_name == "mod":
             return OpMod(self.reg_data, arg1, arg2)
-        elif op_name == 'eql':
+        elif op_name == "eql":
             return OpEql(self.reg_data, arg1, arg2)
 
-        assert False, 'Operator not recognized: {}'.format(op_raw)
+        assert False, "Operator not recognized: {}".format(op_raw)
 
-    # returns prefix which includes split point
+    # returns prefix which includes split point from the beginning
     # and suffix which includes everything else
     def split_program(self, split_at):
         digit_no = 0
         head, tail = [], []
         cur_part = head
-        
+
         for op in self.program:
             if isinstance(op, OpInp):
                 digit_no += 1
-            if digit_no >= split_at+1:
+            if digit_no >= split_at + 1:
                 cur_part = tail
             cur_part.append(op)
 
@@ -160,7 +165,7 @@ class ALU(object):
 
         tail_alu = ALU()
         tail_alu.set_program(tail)
-        
+
         return head_alu, tail_alu
 
     def parse_program(self, lines):
