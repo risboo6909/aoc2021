@@ -31,7 +31,7 @@ def compute(alu):
 
             if len(collected_numbers) > 0:
                 l = len(str(list(collected_numbers)[0]))
-                pos = l - 1 - INP_LEN + split_pos
+                pos = l - INP_LEN - split_pos - 1
                 if pos >= 0:
                     to_check = set(
                         int(item[pos]) for item in map(str, collected_numbers)

@@ -24,6 +24,7 @@ import day21.day21 as d21
 import day22.day22 as d22
 import day23.day23 as d23
 import day24.day24 as d24
+import day25.day25 as d25
 
 
 def show_solution(solution_tuple):
@@ -57,6 +58,7 @@ if __name__ == "__main__":
         d22,
         d23,
         d24,        # this one is really slow
+        d25,
     ]
 
     st = time.time()
